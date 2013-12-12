@@ -41,11 +41,6 @@ Config = Backbone.View.extend(function () {
     function initialize(options) {
         var view = this;
 
-        view.model = {
-            players: 4,
-            game: 'Cricket'
-        };
-
         view.templates = {
             overlay: _.template(overlayTemplate),
             modal: _.template(template)
@@ -54,7 +49,12 @@ Config = Backbone.View.extend(function () {
 
     function render(options) {
         var view = this,
-            $template = $(view.templates.modal(view.model));
+            $template;
+
+        view.state = {
+            players: 4,
+            game: 'Cricket'
+        };
 
         $('body')
             .append(view.templates.overlay({}))
@@ -62,7 +62,7 @@ Config = Backbone.View.extend(function () {
             .fadeIn(100);
 
         $(view.el)
-            .append($template)
+            .append(view.templates.modal(view.state))
             .find('.js-modal-dialog')
             .fadeIn(100)
             .css({ top: 0 });
@@ -80,7 +80,7 @@ Config = Backbone.View.extend(function () {
     function newGame(event) {
         var view = this;
 
-        view.trigger('new',  view.model);
+        view.trigger('new',  view.state);
     }
 
     function updatePlayers(event) {
@@ -89,7 +89,7 @@ Config = Backbone.View.extend(function () {
             playersText = $target.text(),
             players = parseInt(playersText, 10);
 
-        view.model.players = players;
+        view.state.players = players;
 
         view.$('.js-players .button').addClass('secondary');
         $target.removeClass('secondary');
@@ -100,7 +100,7 @@ Config = Backbone.View.extend(function () {
             $target = $(event.currentTarget),
             game = $target.text();
 
-        view.model.game = game;
+        view.state.game = game;
 
         view.$('.js-game .button').addClass('secondary');
         $target.removeClass('secondary');

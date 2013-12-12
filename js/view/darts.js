@@ -29,7 +29,6 @@ Darts = Backbone.View.extend(function () {
 
         view.subviews.NavBar = new NavBar();
         view.subviews.NavBar.on('new', function () {
-            view.subviews.Config = new Config();
             view.assign('.js-config-container', view.subviews.Config);
         });
 

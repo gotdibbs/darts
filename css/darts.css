@@ -1,0 +1,41 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Arial;
+    font-size: 1rem; }
+
+.board {
+    padding-top: 1.25rem;
+    text-align: center; }
+
+.board-divider {
+    border-left: 1px solid #000; 
+    border-right: 1px solid #000;
+    font-size: 3rem; }
+
+.board-header {
+    font-size: 2rem;
+    border-bottom: 1px solid #000; }
+
+.game-mode {
+    font-size: 2rem;
+    background-color: #008cba;
+    color: #fff; }
+
+.board-header .columns {
+    padding: 1rem; }
+
+.board-header-active {
+    background-color: #43ac6a;
+    color: #fff; }
+
+.board-score .columns {
+    font-size: 2rem;
+    padding: 1rem;
+    height: 4rem; }
+
+.board-footer {
+    font-size: 2.5rem;
+    font-weight: bold;
+    border-top: 1px solid #000; }
+
+.board-footer .columns {
+    padding: 1rem; }

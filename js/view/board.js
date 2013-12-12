@@ -8,35 +8,64 @@ Board = Backbone.View.extend(function () {
         'click .js-mark': updateScore,
         'click .js-undo': undo,
         'mousedown .columns': preventTextSelection,
-        'click .player': nextRound,
-        'click .game-mode': switchMode
+        'click .player': nextRound
     },
 
     headerTemplate = [
         '<div class="row board-header">',
             '<div class="small-1 columns">&nbsp;</div>',
+            '<% if (players < 3) { %>',
+                '<div class="small-2 columns">&nbsp;</div>',
+            '<% } %>',
             '<div class="small-2 columns player player1<%= player1 ? " board-header-active" : "" %>">P1</div>',
-            '<div class="small-2 columns player player3<%= player3 ? " board-header-active" : "" %>">P3</div>',
+            '<% if (players > 2) { %>',
+                '<div class="small-2 columns player player3<%= player3 ? " board-header-active" : "" %>">P3</div>',
+            '<% } %>',
             '<div class="small-2 columns board-divider game-mode">',
                 '<%= isWildCard ? "Wildcard" : "Cricket" %>',
             '</div>',
-            '<div class="small-2 columns player player2<%= player2 ? " board-header-active" : "" %>" data-step="3" data-intro="Tap here to advance to player 2\'s turn.">P2</div>',
-            '<div class="small-2 columns player player4<%= player4 ? " board-header-active" : "" %>">P4</div>',
+            '<% if (players > 1) { %>',
+                '<div class="small-2 columns player player2<%= player2 ? " board-header-active" : "" %>" data-step="3" data-intro="Tap here to advance to player 2\'s turn.">P2</div>',
+            '<% } %>',
+            '<% if (players > 3) { %>',
+                '<div class="small-2 columns player player4<%= player4 ? " board-header-active" : "" %>">P4</div>',
+            '<% } %>',
+            '<% if (players < 4) { %>',
+                '<div class="small-2 columns">&nbsp;</div>',
+            '<% } %>',
+            '<% if (players < 2) { %>',
+                '<div class="small-2 columns">&nbsp;</div>',
+            '<% } %>',
             '<div class="small-1 columns">&nbsp;</div>',
         '</div>'
     ].join(''),
 
     scoreTemplate = [
         '<% _.each(marks, function (mark) { %>',
-            '<div class="row board-score">',
+            '<div class="row board-score<%= mark.closed ? " closed" : "" %>">',
                 '<div class="small-1 columns">&nbsp;</div>',
+                '<% if (mark.players < 3) { %>',
+                    '<div class="small-2 columns">&nbsp;</div>',
+                '<% } %>',
                 '<div class="small-2 columns player player1 js-value-<%= mark.value %>"><%= mark.player1Text %></div>',
-                '<div class="small-2 columns player player3 js-value-<%= mark.value %>"><%= mark.player3Text %></div>',
+                '<% if (mark.players > 2) { %>',
+                    '<div class="small-2 columns player player3 js-value-<%= mark.value %>"><%= mark.player3Text %></div>',
+                '<% } %>',
                 '<div class="small-2 columns label board-divider js-mark">',
                     '<%= mark.value %>',
                 '</div>',
-                '<div class="small-2 columns player player2 js-value-<%= mark.value %>"><%= mark.player2Text %></div>',
-                '<div class="small-2 columns player player4 js-value-<%= mark.value %>"><%= mark.player4Text %></div>',
+                '<% if (mark.players > 1) { %>',
+                    '<div class="small-2 columns player player2 js-value-<%= mark.value %>"><%= mark.player2Text %></div>',
+                '<% } %>',
+                '<% if (mark.players > 3) { %>',
+                    '<div class="small-2 columns player player4 js-value-<%= mark.value %>"><%= mark.player4Text %></div>',
+                '<% } %>',
+                '<% if (mark.players < 4) { %>',
+                    '<div class="small-2 columns">&nbsp;</div>',
+                '<% } %>',
+                '<% if (mark.players < 2) { %>',
+                    '<div class="small-2 columns">&nbsp;</div>',
+                '<% } %>',
                 '<div class="small-1 columns">&nbsp;</div>',
             '</div>',
         '<% }); %>'
@@ -45,13 +74,28 @@ Board = Backbone.View.extend(function () {
     footerTemplate = [
         '<div class="row board-footer">',
             '<div class="small-1 columns">&nbsp;</div>',
+            '<% if (players < 3) { %>',
+                '<div class="small-2 columns">&nbsp;</div>',
+            '<% } %>',
             '<div class="small-2 columns player player1"><%= player1 %></div>',
-            '<div class="small-2 columns player player3"><%= player3 %></div>',
+            '<% if (players > 2) { %>',
+                '<div class="small-2 columns player player3"><%= player3 %></div>',
+            '<% } %>',
             '<div class="small-2 columns">',
                 '<a href="javascript:void(0)" class="alert button js-undo">Undo</a>',
             '</div>',
-            '<div class="small-2 columns player player2"><%= player2 %></div>',
-            '<div class="small-2 columns player player4"><%= player4 %></div>',
+            '<% if (players > 1) { %>',
+                '<div class="small-2 columns player player2"><%= player2 %></div>',
+            '<% } %>',
+            '<% if (players > 4) { %>',
+                '<div class="small-2 columns player player4"><%= player4 %></div>',
+            '<% } %>',
+            '<% if (players < 4) { %>',
+                '<div class="small-2 columns">&nbsp;</div>',
+            '<% } %>',
+            '<% if (players < 2) { %>',
+                '<div class="small-2 columns">&nbsp;</div>',
+            '<% } %>',
             '<div class="small-1 columns">&nbsp;</div>',
         '</div>'
     ].join('');
@@ -72,7 +116,8 @@ Board = Backbone.View.extend(function () {
             player2: 0,
             player3: 0,
             player4: 0,
-            isWildCard: view.isWildCard,
+            players: view.options.players,
+            isWildCard: (view.options.game === 'Wildcard'),
             actions: []
         };
 
@@ -81,7 +126,7 @@ Board = Backbone.View.extend(function () {
             '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20'
         ];
 
-        if (view.isWildCard) {
+        if (view.state.isWildCard) {
             validNumbers = _.clone(view.wildCardNumbers);
 
             view.collection = new Marks([]);
@@ -90,7 +135,8 @@ Board = Backbone.View.extend(function () {
                 nextNumber = validNumbers[Math.floor(Math.random() * validNumbers.length)]
 
                 view.collection.add({ 
-                    value: nextNumber
+                    value: nextNumber,
+                    players: view.options.players
                 });
 
                 validNumbers = _.without(validNumbers, nextNumber)
@@ -100,13 +146,13 @@ Board = Backbone.View.extend(function () {
         }
         else {
             view.collection = new Marks([
-                { value: '20' },
-                { value: '19' },
-                { value: '18' },
-                { value: '17' },
-                { value: '16' },
-                { value: '15' },
-                { value: 'BULL' }
+                { value: '20', players: view.options.players },
+                { value: '19', players: view.options.players },
+                { value: '18', players: view.options.players },
+                { value: '17', players: view.options.players },
+                { value: '16', players: view.options.players },
+                { value: '15', players: view.options.players },
+                { value: 'BULL', players: view.options.players }
             ]);
         }
 
@@ -114,7 +160,8 @@ Board = Backbone.View.extend(function () {
             player1: 0,
             player2: 0,
             player3: 0,
-            player4: 0
+            player4: 0,
+            players: view.options.players
         };
     }
 
@@ -156,7 +203,7 @@ Board = Backbone.View.extend(function () {
             $('.' + player + '.js-value-' + valueText)
                 .stop()
                 .css({backgroundColor: '#ddd'})
-                .animate({backgroundColor: '#fff'}, 1500);
+                .animate({backgroundColor: 'transparent'}, 1500);
         }, 100);
 
         view.collection.forEach(function (mark) {
@@ -168,7 +215,7 @@ Board = Backbone.View.extend(function () {
         });
 
         if (currentMarks === '(X)') {
-            if (!currentMark.isClosed(player)) {
+            if (currentMark.canScorePoints(player)) {
                 view.model[player] += value;
                 view.state.actions.push({ 
                     type: 'points',
@@ -185,15 +232,11 @@ Board = Backbone.View.extend(function () {
             });
         }
 
-        view.collection.forEach(function (mark) {
-            var modelValue = mark.get('value'),
-                currentScore;
+        currentScore = currentMark.get(player);
 
-            if (modelValue === valueText) {
-                currentScore = mark.get(player);
-                mark.set(player, ++currentScore);
-            }
-        });
+        if (currentMark.canScorePoints(player) || currentScore < 3) {
+            currentMark.set(player, ++currentScore);
+        }
 
         view.render();
     }
@@ -229,7 +272,7 @@ Board = Backbone.View.extend(function () {
 
         view.rounds++;
 
-        if (!view.isWildCard) {
+        if (!view.state.isWildCard) {
             return;
         }
 
@@ -251,26 +294,6 @@ Board = Backbone.View.extend(function () {
             }
         });
 
-        view.render();
-    }
-
-    function switchMode(event) {
-        var view = this;
-
-        if (!window.confirm('Switching game modes will erase the current game. Continue?')) {
-            return;
-        }
-
-        view.isWildCard = !view.isWildCard;
-
-        if (view.isWildCard) {
-            view.$('.js-mode').text('Wildcard');
-        }
-        else {
-            view.$('.js-mode').text('Cricket');
-        }
-
-        view.initialize();
         view.render();
     }
 
@@ -319,7 +342,6 @@ Board = Backbone.View.extend(function () {
     }
 
     return {
-        isWildCard: isWildCard,
         events: events,
 
         initialize: initialize,

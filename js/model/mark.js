@@ -5,6 +5,8 @@ Mark = Backbone.Model.extend(function () {
 
     var defaults = {
         value: 0,
+        closed: false,
+        players: 4,
         player1: 0,
         player1Text: '&nbsp;',
         player2: 0,
@@ -20,18 +22,22 @@ Mark = Backbone.Model.extend(function () {
 
         model.on('change:player1', function () {
             model.set('player1Text', model.getText(model.get('player1')));
+            model.updateClosed();
         });
 
         model.on('change:player2', function () {
             model.set('player2Text', model.getText(model.get('player2')));
+            model.updateClosed();
         });
 
         model.on('change:player3', function () {
             model.set('player3Text', model.getText(model.get('player3')));
+            model.updateClosed();
         });
 
         model.on('change:player4', function () {
             model.set('player4Text', model.getText(model.get('player4')));
+            model.updateClosed();
         });
     }
 
@@ -50,21 +56,46 @@ Mark = Backbone.Model.extend(function () {
             model.get('player4');
     }
 
-    function isClosed(player) {
-        // TODO: configurable number of players
+    function canScorePoints(player) {
         var model = this,
-            leftToClose = 3,
-            players = ['player1', 'player2', 'player3', 'player4'];
+            players = model.get('players'),
+            leftToClose = players - 1,
+            playersList = [];
 
-        players = _.without(players, player);
+        for (i = 1; i <= players; i++) {
+            playersList.push('player' + i);
+        }
 
-        _.each(players, function (p) {
+        playersList = _.without(playersList, player);
+
+        _.each(playersList, function (p) {
             if (model.get(p) > 2) {
                 leftToClose--;
             }
         });
 
-        return (leftToClose === 0);
+        return (leftToClose > 0);
+    }
+
+    function updateClosed() {
+        var model = this,
+            currentState = model.get('closed'),
+            players = model.get('players'),
+            leftToClose = players,
+            i;
+
+        for (i = 1; i <= players; i++) {
+            if (model.get('player' + i) > 2){
+                leftToClose--;
+            }
+        }
+
+        if (leftToClose === 0 && !currentState) {
+            model.set('closed', true);
+        }
+        else if (currentState) {
+            model.set('closed', false);
+        }
     }
 
     return {
@@ -74,7 +105,8 @@ Mark = Backbone.Model.extend(function () {
 
         getText: getText,
         hasMarks: hasMarks,
-        isClosed: isClosed
+        canScorePoints: canScorePoints,
+        updateClosed: updateClosed
     };
 
 }());

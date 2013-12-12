@@ -23,12 +23,6 @@ NavBar = Backbone.View.extend(function () {
             showPrevButton: true,
             steps: [
                 {
-                    target: $('.game-mode')[0],
-                    placement: 'right',
-                    title: 'Change Games',
-                    content: 'Tap the game title to toggle game modes between CRICKET to WILDCARD.'
-                },
-                {
                     target: $('.js-mark').first()[0],
                     placement: 'right',
                     title: 'Get Some Marks',

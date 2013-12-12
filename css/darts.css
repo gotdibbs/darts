@@ -27,6 +27,9 @@ body {
     background-color: #43ac6a;
     color: #fff; }
 
+.board-score.closed {
+    background-color: #eee; }
+
 .board-score .columns {
     font-size: 2rem;
     padding: 1rem;
@@ -39,3 +42,56 @@ body {
 
 .board-footer .columns {
     padding: 1rem; }
+
+/* -- Modal -- */
+.modal {
+    border: none;
+    margin: auto;
+    position: absolute;
+    top: -560px;
+    right: 0;
+    left: 0;
+    background: #fff;
+    height: 380px;
+    width: 560px;
+    padding: 0.5rem;
+    box-shadow: 0 0 1em #000;
+    overflow: auto;
+    z-index: 1006;
+    display: none;
+    -webkit-transition: all 0.3s;
+    -moz-transition: all 0.3s;
+    transition: all 0.3s; }
+
+.modal-header {
+    width: 85%;
+    width: calc(100% - 95px) !important;
+    margin: 1rem 2rem; }
+
+.modal-description {
+    width: 85%;
+    width: calc(100% - 95px) !important;
+    margin: 1rem 2rem;
+    color: #666666; }
+
+.modal-background {
+    z-index: 1005;
+    opacity: 0.5;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background-color: grey;
+    display: none; }
+
+.modal-footer {
+    position: absolute;
+    bottom: 1rem;
+    right: 2rem;
+    text-align: right;
+    width: 85%;
+    margin: 1rem 2rem; }
+
+.modal-footer .button {
+    margin-left: 1rem; }

@@ -87,7 +87,7 @@ Board = Backbone.View.extend(function () {
             '<% if (players > 1) { %>',
                 '<div class="small-2 columns player player2"><%= player2 %></div>',
             '<% } %>',
-            '<% if (players > 4) { %>',
+            '<% if (players > 3) { %>',
                 '<div class="small-2 columns player player4"><%= player4 %></div>',
             '<% } %>',
             '<% if (players < 4) { %>',

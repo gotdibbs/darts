@@ -74,11 +74,18 @@ Config = Backbone.View.extend(function () {
     }
 
     function remove(event) {
+        var $dialog = $('.js-modal-dialog'),
+            $background = $('.js-modal-background');
+
         if (event) { event.preventDefault(); }
 
-        $('.js-modal-dialog,.js-modal-background')
-            .fadeOut(100, function onComplete() {
-                $(this).remove();
+        $dialog
+            .css({ top: "-560px" });
+
+        $background
+            .fadeOut(300, function onComplete() {
+                $background.remove();
+                $dialog.remove();
             });
     }
 

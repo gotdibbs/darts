@@ -49,10 +49,7 @@ NavBar = Backbone.View.extend(function () {
     return {
         events: events,
 
-        initialize: initialize,
-
-        startNewGame: startNewGame,
-        startTour: startTour
+        initialize: initialize
     };
 
 }());

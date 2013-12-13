@@ -2,9 +2,7 @@ var Board;
 
 Board = Backbone.View.extend(function () {
 
-    var isWildCard = false,
-
-    events = {
+    var events = {
         'click .js-mark': updateScore,
         'click .js-undo': undo,
         'mousedown .columns': preventTextSelection,
@@ -17,18 +15,18 @@ Board = Backbone.View.extend(function () {
             '<% if (players < 3) { %>',
                 '<div class="small-2 columns">&nbsp;</div>',
             '<% } %>',
-            '<div class="small-2 columns player player1<%= player1 ? " board-header-active" : "" %>">P1</div>',
+            '<div class="small-2 columns player player1<%= player==="player1" ? " board-header-active" : "" %>">P1</div>',
             '<% if (players > 2) { %>',
-                '<div class="small-2 columns player player3<%= player3 ? " board-header-active" : "" %>">P3</div>',
+                '<div class="small-2 columns player player3<%= player==="player3" ? " board-header-active" : "" %>">P3</div>',
             '<% } %>',
-            '<div class="small-2 columns board-divider game-mode">',
-                '<%= isWildCard ? "Wildcard" : "Cricket" %>',
+            '<div class="small-2 columns game-mode">',
+                '<%= game %>',
             '</div>',
             '<% if (players > 1) { %>',
-                '<div class="small-2 columns player player2<%= player2 ? " board-header-active" : "" %>" data-step="3" data-intro="Tap here to advance to player 2\'s turn.">P2</div>',
+                '<div class="small-2 columns player player2<%= player==="player2" ? " board-header-active" : "" %>">P2</div>',
             '<% } %>',
             '<% if (players > 3) { %>',
-                '<div class="small-2 columns player player4<%= player4 ? " board-header-active" : "" %>">P4</div>',
+                '<div class="small-2 columns player player4<%= player==="player4" ? " board-header-active" : "" %>">P4</div>',
             '<% } %>',
             '<% if (players < 4) { %>',
                 '<div class="small-2 columns">&nbsp;</div>',
@@ -101,9 +99,7 @@ Board = Backbone.View.extend(function () {
     ].join('');
 
     function initialize() {
-        var view = this,
-            validNumbers,
-            nextNumber;
+        var view = this;
 
         view.templates ={
             header: _.template(headerTemplate),
@@ -111,58 +107,17 @@ Board = Backbone.View.extend(function () {
             footer: _.template(footerTemplate),
         };
 
+        view.logic = Games[view.options.game];
+
         view.state = {
-            player1: 1,
-            player2: 0,
-            player3: 0,
-            player4: 0,
+            player: 'player1',
             players: view.options.players,
-            isWildCard: (view.options.game === 'Wildcard'),
+            game: view.options.game,
+            rounds: 0,
             actions: []
         };
 
-        view.rounds = 0;
-        view.wildCardNumbers = [
-            '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20'
-        ];
-
-        if (view.state.isWildCard) {
-            validNumbers = _.clone(view.wildCardNumbers);
-
-            view.collection = new Marks([]);
-
-            for (var i = 0; i < 6; i++) {
-                nextNumber = validNumbers[Math.floor(Math.random() * validNumbers.length)]
-
-                view.collection.add({ 
-                    value: nextNumber,
-                    players: view.options.players
-                });
-
-                validNumbers = _.without(validNumbers, nextNumber)
-            }
-
-            view.collection.add({ value: 'BULL' });
-        }
-        else {
-            view.collection = new Marks([
-                { value: '20', players: view.options.players },
-                { value: '19', players: view.options.players },
-                { value: '18', players: view.options.players },
-                { value: '17', players: view.options.players },
-                { value: '16', players: view.options.players },
-                { value: '15', players: view.options.players },
-                { value: 'BULL', players: view.options.players }
-            ]);
-        }
-
-        view.model = {
-            player1: 0,
-            player2: 0,
-            player3: 0,
-            player4: 0,
-            players: view.options.players
-        };
+        view.logic.initialize(view);
     }
 
     function render() {
@@ -171,7 +126,7 @@ Board = Backbone.View.extend(function () {
             $score = $(view.templates.score({
                 marks: view.collection.toJSON()
             })),
-            $footer = $(view.templates.footer(view.model));
+            $footer = $(view.templates.footer(view.scores));
 
         view.$el.empty();
         view.$el.append($header)
@@ -179,76 +134,18 @@ Board = Backbone.View.extend(function () {
             .append($footer);
     }
 
-    function getCurrentPlayer() {
+    function updateScore(event) {
         var view = this;
 
-        return view.state.player1 ? 'player1' :
-            view.state.player2 ? 'player2' :
-            view.state.player3 ? 'player3' : 'player4';
-    }
-
-    function updateScore(event) {
-        var view = this,
-            $target = $(event.currentTarget),
-            player = view.getCurrentPlayer(),
-            $player = $('.' + player, $target.parent()),
-            currentMarks = $player.text(),
-            valueText = $target.text(),
-            value = parseInt(valueText, 10) || 25,
-            currentMark;
-
-        // Delay the highlight so that it runs after re-render is complete.
-        // 1337 hax, I know :( will fix later
-        setTimeout(function () {
-            $('.' + player + '.js-value-' + valueText)
-                .stop()
-                .css({backgroundColor: '#ddd'})
-                .animate({backgroundColor: 'transparent'}, 1500);
-        }, 100);
-
-        view.collection.forEach(function (mark) {
-            var modelValue = mark.get('value');
-
-            if (modelValue === valueText) {
-                currentMark = mark;
-            }
+        view.logic.updateScore(event, view, function () {
+            view.render();
         });
-
-        if (currentMarks === '(X)') {
-            if (currentMark.canScorePoints(player)) {
-                view.model[player] += value;
-                view.state.actions.push({ 
-                    type: 'points',
-                    player: player,
-                    value: valueText
-                });
-            }
-        }
-        else {
-            view.state.actions.push({ 
-                type: 'add',
-                player: player,
-                value: valueText
-            });
-        }
-
-        currentScore = currentMark.get(player);
-
-        if (currentMark.canScorePoints(player) || currentScore < 3) {
-            currentMark.set(player, ++currentScore);
-        }
-
-        view.render();
     }
 
     function _interpretPlayer($elem) {
         return $elem.hasClass('player1') ? 'player1' :
             $elem.hasClass('player2') ? 'player2' :
             $elem.hasClass('player3') ? 'player3' : 'player4';
-    }
-
-    function _increaseScore(player, vlaue) {
-        // TODO: validate player's score is no more than 200 past closest player
     }
 
     function preventTextSelection(event) {
@@ -259,97 +156,38 @@ Board = Backbone.View.extend(function () {
     function nextRound(event) {
         var view = this,
             $target = $(event.currentTarget),
-            previousPlayer = _interpretPlayer(view.$('.board-header-active')),
-            player = _interpretPlayer($target),
-            validNumbers,
-            currentNumbers = [];
+            player = _interpretPlayer($target);
 
         view.$('.board-header .player').removeClass('board-header-active');
         $('.board-header .' + player).addClass('board-header-active');
 
-        view.state[previousPlayer] = 0;
-        view.state[player] = 1;
+        view.state.player = player;
+        view.state.rounds++;
 
-        view.rounds++;
-
-        if (!view.state.isWildCard) {
-            return;
-        }
-
-        view.collection.forEach(function (mark) {
-            if (mark.hasMarks()) {
-                currentNumbers.push(mark.get('value'));
-            }
+        view.logic.nextRound(event, view, function () {
+            view.render();
         });
-
-        validNumbers = _.difference(view.wildCardNumbers, currentNumbers);
-
-        view.collection.forEach(function (mark) {
-            var nextNumber = validNumbers[Math.floor(Math.random() * validNumbers.length)];
-
-            if (mark.get('value') !== 'BULL' && !mark.hasMarks()) {
-                mark.set('value', nextNumber);
-
-                validNumbers = _.without(validNumbers, nextNumber);
-            }
-        });
-
-        view.render();
     }
 
     function undo(event) {
         var view = this,
             action = view.state.actions.pop(),
-            currentPlayer = _interpretPlayer(view.$('.board-header-active')),
-            type,
-            player,
-            valueText,
-            value;
+            currentPlayer = _interpretPlayer(view.$('.board-header-active'));
 
         if (!action) {
             return;
         }
 
-        type = action.type,
-        player = action.player,
-        valueText = action.value,
-        value = parseInt(valueText, 10) || 25;
-
-        if (action.type === 'points') {
-            view.model[player] -= value;
-            view.$('.board-footer .' + player).text(view.model[player]);
-        }
-
-        if (currentPlayer !== player) {
-            view.$('.board-header .player').removeClass('board-header-active');
-            view.$('.board-header .' + player).addClass('board-header-active');
-
-            view.state[currentPlayer] = 0;
-            view.state[player] = 1;
-        }
-        
-        view.collection.forEach(function (mark) {
-            var modelValue = mark.get('value'),
-                currentScore;
-
-            if (modelValue === valueText) {
-                currentScore = mark.get(player);
-                mark.set(player, --currentScore);
-            }
+        view.logic.undo(view, action, currentPlayer, function () {
+            view.render();
         });
-
-        view.render();
     }
 
     return {
         events: events,
 
         initialize: initialize,
-        render: render,
-
-        updateScore: updateScore,
-        preventTextSelection: preventTextSelection,
-        getCurrentPlayer: getCurrentPlayer
+        render: render
     };
 
 }());

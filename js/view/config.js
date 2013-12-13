@@ -27,8 +27,9 @@ Config = Backbone.View.extend(function () {
                 '</ul>',
                 '<label for="tabs">Game</label>',
                 '<ul class="button-group js-game">',
-                    '<li><a href="#" class="button">Cricket</a></li>',
-                    '<li><a href="#" class="button secondary">Wildcard</a></li>',,
+                    '<% _.each(Games, function (game, name) { %>',
+                        '<li><a href="#" class="button secondary"><%= name %></a></li>',
+                    '<% }); %>',
                 '</ul>',
             '</div>',
             '<div class="modal-footer">',
@@ -61,11 +62,15 @@ Config = Backbone.View.extend(function () {
             .find('.js-modal-background')
             .fadeIn(100);
 
-        $(view.el)
+        view.$el
             .append(view.templates.modal(view.state))
             .find('.js-modal-dialog')
             .fadeIn(100)
             .css({ top: 0 });
+
+        view.$('.js-game .button')
+            .first()
+            .removeClass('secondary');
     }
 
     function remove(event) {
@@ -112,10 +117,7 @@ Config = Backbone.View.extend(function () {
 
         initialize: initialize,
         render: render,
-        remove: remove,
-        newGame: newGame,
-        updatePlayers: updatePlayers,
-        updateGame: updateGame
+        remove: remove
     }; 
 
 }());

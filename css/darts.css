@@ -17,8 +17,7 @@ body {
 
 .game-mode {
     font-size: 2rem;
-    background-color: #008cba;
-    color: #fff; }
+    color: #aaa; }
 
 .board-header .columns {
     padding: 1rem; }

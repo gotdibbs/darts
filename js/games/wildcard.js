@@ -27,7 +27,10 @@
                 validNumbers = _.without(validNumbers, nextNumber)
             }
 
-            view.collection.add({ value: 'BULL' });
+            view.collection.add({ 
+                value: 'BULL',
+                players: view.options.players
+            });
 
             view.scores = {
                 player1: 0,

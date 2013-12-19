@@ -2,13 +2,38 @@ var Darts;
 
 Darts = Backbone.View.extend(function () {
 
-    var subviews = {};
+    var subviews = {},
+        Dispatcher = _.clone(Backbone.Events);
 
     function initialize() {
         var view = this;
 
-        view.subviews.Config = new Config();
-        view.subviews.Config.on('new', function (event) {
+        view.subviews.Config = new Config({
+            Dispatcher: Dispatcher
+        });
+
+        view.subviews.NavBar = new NavBar({
+            Dispatcher: Dispatcher
+        });
+
+        view.attachEvents();
+
+        // Render the page
+        view.render();
+
+        // Initialize Foundation
+        $(document).foundation();
+    }
+
+    function attachEvents() {
+        var view = this;
+
+        Dispatcher.on('new', function (event) {
+            // Assign the config container
+            view.assign('.js-config-container', view.subviews.Config);
+        });
+
+        Dispatcher.on('start', function (event) {
             // Remove the dialog
             view.subviews.Config.remove();
             // Remove the old board
@@ -18,25 +43,15 @@ Darts = Backbone.View.extend(function () {
             $('.board').append('<div class="large-12 columns js-board-wrapper"></div>');
 
             // Create the board
-            view.subviews.Board = new Board({
-                players: event.players,
-                game: event.game
+            view.subviews.Board = new Games[event.game]({
+                Dispatcher: Dispatcher,
+                players: event.players
             });
 
             // Assign the board to the wrapper and render
             view.assign('.js-board-wrapper', view.subviews.Board);
+            
         });
-
-        view.subviews.NavBar = new NavBar();
-        view.subviews.NavBar.on('new', function () {
-            view.assign('.js-config-container', view.subviews.Config);
-        });
-
-        // Render the page
-        view.render();
-
-        // Initialize Foundation
-        $(document).foundation();
     }
 
     function render() {
@@ -67,6 +82,7 @@ Darts = Backbone.View.extend(function () {
         subviews: subviews,
 
         initialize: initialize,
+        attachEvents: attachEvents,
         render: render,
         assign: assign
     };

@@ -7,36 +7,36 @@ Mark = Backbone.Model.extend(function () {
         value: 0,
         closed: false,
         players: 4,
-        player1: 0,
+        '1': 0,
         player1Text: '&nbsp;',
-        player2: 0,
+        '2': 0,
         player2Text: '&nbsp;',
-        player3: 0,
+        '3': 0,
         player3Text: '&nbsp;',
-        player4: 0,
+        '4': 0,
         player4Text: '&nbsp;'
     };
 
     function initialize() {
         var model = this;
 
-        model.on('change:player1', function () {
-            model.set('player1Text', model.getText(model.get('player1')));
+        model.on('change:1', function () {
+            model.set('player1Text', model.getText(model.get('1')));
             model.updateClosed();
         });
 
-        model.on('change:player2', function () {
-            model.set('player2Text', model.getText(model.get('player2')));
+        model.on('change:2', function () {
+            model.set('player2Text', model.getText(model.get('2')));
             model.updateClosed();
         });
 
-        model.on('change:player3', function () {
-            model.set('player3Text', model.getText(model.get('player3')));
+        model.on('change:3', function () {
+            model.set('player3Text', model.getText(model.get('3')));
             model.updateClosed();
         });
 
-        model.on('change:player4', function () {
-            model.set('player4Text', model.getText(model.get('player4')));
+        model.on('change:4', function () {
+            model.set('player4Text', model.getText(model.get('4')));
             model.updateClosed();
         });
     }
@@ -50,10 +50,10 @@ Mark = Backbone.Model.extend(function () {
     function hasMarks() {
         var model = this;
 
-        return model.get('player1') ||
-            model.get('player2') ||
-            model.get('player3') ||
-            model.get('player4');
+        return model.get('1') ||
+            model.get('2') ||
+            model.get('3') ||
+            model.get('4');
     }
 
     function canScorePoints(player) {
@@ -63,7 +63,7 @@ Mark = Backbone.Model.extend(function () {
             playersList = [];
 
         for (i = 1; i <= players; i++) {
-            playersList.push('player' + i);
+            playersList.push(i);
         }
 
         playersList = _.without(playersList, player);
@@ -85,7 +85,7 @@ Mark = Backbone.Model.extend(function () {
             i;
 
         for (i = 1; i <= players; i++) {
-            if (model.get('player' + i) > 2){
+            if (model.get(i) > 2){
                 leftToClose--;
             }
         }

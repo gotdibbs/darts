@@ -1,6 +1,7 @@
 body {
     font-family: 'Segoe UI', Tahoma, Arial;
-    font-size: 1rem; }
+    font-size: 1rem; 
+    overflow-y: hidden; }
 
 .board {
     padding-top: 1.25rem;
@@ -32,7 +33,8 @@ body {
 .board-score .columns {
     font-size: 2rem;
     padding: 1rem;
-    height: 4rem; }
+    height: 4rem;
+    line-height: 1; }
 
 .board-footer {
     font-size: 2.5rem;
@@ -41,6 +43,9 @@ body {
 
 .board-footer .columns {
     padding: 1rem; }
+
+.drop-left-padding {
+    padding-left: 0; }
 
 /* -- Modal -- */
 .modal {
@@ -87,10 +92,37 @@ body {
 .modal-footer {
     position: absolute;
     bottom: 1rem;
-    right: 2rem;
     text-align: right;
     width: 85%;
     margin: 1rem 2rem; }
 
+.modal-hint {
+    position: absolute;
+    bottom: 1rem;
+    text-align: center;
+    color: #aaa;
+    width: calc(100% - 1rem);
+    margin: 0; }
+
 .modal-footer .button {
     margin-left: 1rem; }
+
+/* -- Score Modal -- */
+.score-modal {
+    border: none;
+    margin: auto;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: -560px;
+    background: #fff;
+    height: 380px;
+    width: 560px;
+    padding: 0.5rem;
+    box-shadow: 0 0 1em #000;
+    overflow: auto;
+    z-index: 1006;
+    display: none;
+    -webkit-transition: all 0.3s;
+    -moz-transition: all 0.3s;
+    transition: all 0.3s; }

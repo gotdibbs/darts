@@ -14,7 +14,7 @@ NavBar = Backbone.View.extend(function () {
     function startNewGame() {
         var view = this;
 
-        view.trigger('new');
+        view.options.Dispatcher.trigger('new');
     }
 
     function startTour() {
@@ -29,10 +29,10 @@ NavBar = Backbone.View.extend(function () {
                     content: 'Tap numbers like these to track a mark against the selected number for the selected player.'
                 },
                 {
-                    target: $('.board-header .player2')[0],
+                    target: $('.board-score')[0],
                     placement: 'bottom',
                     title: 'End a Round',
-                    content: 'Tap on another player to end the current round.'
+                    content: 'Swipe across the board to end the current round.'
                 },
                 {
                     target: $('.js-undo')[0],

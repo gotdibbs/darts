@@ -16,6 +16,10 @@ Darts = Backbone.View.extend(function () {
             Dispatcher: Dispatcher
         });
 
+        view.subviews.Stats = new Stats({
+            Dispatcher: Dispatcher
+        });
+
         view.attachEvents();
 
         // Render the page
@@ -50,7 +54,12 @@ Darts = Backbone.View.extend(function () {
 
             // Assign the board to the wrapper and render
             view.assign('.js-board-wrapper', view.subviews.Board);
-            
+        });
+
+        Dispatcher.on('show-stats', function (options) {
+            view.assign('.js-stats-container', view.subviews.Stats, _.extend({
+                Dispatcher: Dispatcher
+            }, options));
         });
     }
 
@@ -63,7 +72,7 @@ Darts = Backbone.View.extend(function () {
         });
     }
 
-    function assign(selector, view) {
+    function assign(selector, view, options) {
         var selectors;
         if (_.isObject(selector)) {
             selectors = selector;
@@ -74,7 +83,7 @@ Darts = Backbone.View.extend(function () {
         }
         if (!selectors) return;
         _.each(selectors, function (view, selector) {
-            view.setElement(this.$(selector)).render();
+            view.setElement(this.$(selector)).render(options);
         }, this);
     }
 

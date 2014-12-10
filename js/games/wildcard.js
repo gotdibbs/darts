@@ -126,7 +126,8 @@
                     player2: 0,
                     player3: 0,
                     player4: 0
-                }
+                },
+                isTouchRegistered: false
             };
 
             validNumbers = _.clone(wildCardNumbers);
@@ -168,14 +169,23 @@
 
             view.$el
                 .empty()
-                .off('dragend')
                 .append($header)
                 .append($score)
                 .append($footer);
 
-            // Initialize Hammer
-            view.$el.hammer({ drag_lock_to_axis: true, drag_min_distance: 100 })
-                .on('dragend', '.columns', $.proxy(showStats, view));
+            if (!view.state.isTouchRegistered) {
+                view.state.isTouchRegistered = true;
+
+                // Initialize Hammer
+                touchControl = new Hammer(view.el);
+
+                touchControl.get('swipe').set({ 
+                    direction: Hammer.DIRECTION_LEFT,
+                    threshold: 100
+                });
+
+                touchControl.on('swipeleft', $.proxy(showStats, view));
+            }
         }
 
         function showStats(event) {
@@ -189,8 +199,7 @@
                     return ((action.type === 'points' || action.type === 'add') && action.player === view.state.player);
                 }).length;
 
-            stats = new Stats({
-                Dispatcher: view.options.Dispatcher,
+            view.options.Dispatcher.trigger('show-stats', {
                 header: 'Round Summary',
                 stats: [
                     { Name: 'Rounds', Value: view.state.rounds },
@@ -199,8 +208,6 @@
                 currentPlayer: currentPlayer,
                 nextPlayer: nextPlayer
             });
-
-            stats.setElement($('.js-stats-container')).render();
         }
 
         function advanceRound(event) {
@@ -309,8 +316,7 @@
             });
 
             if (isPlayerClosed && view.state.scores['player' + player] >= _.max(view.state.scores)) {
-                stats = new Stats({
-                    Dispatcher: view.options.Dispatcher,
+                view.options.Dispatcher.trigger('show-stats', {
                     header: 'Game Over',
                     endGame: true,
                     stats: [
@@ -318,8 +324,6 @@
                         { Name: 'Rounds', Value: view.state.rounds }
                     ]
                 });
-
-                stats.setElement($('.js-stats-container')).render();
             }
         }
 

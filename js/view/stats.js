@@ -42,6 +42,8 @@ Stats = Backbone.View.extend(function () {
         var view = this,
             $template;
 
+        view.options = options;
+
         $('body')
             .append(view.templates.overlay({}))
             .find('.js-modal-background')
@@ -72,21 +74,17 @@ Stats = Backbone.View.extend(function () {
             .fadeOut(300, function onComplete() {
                 $background.remove();
                 $dialog.remove();
-            });
 
-        if (!view.options.endGame) {
-            view.options.Dispatcher.trigger('next-round', {
-                currentPlayer: view.options.currentPlayer,
-                nextPlayer: view.options.nextPlayer
+                if (!view.options.endGame) {
+                    view.options.Dispatcher.trigger('next-round', {
+                        currentPlayer: view.options.currentPlayer,
+                        nextPlayer: view.options.nextPlayer
+                    });
+                }
+                else {
+                    view.options.Dispatcher.trigger('new');
+                }
             });
-        }
-        else {
-            view.options.Dispatcher.trigger('new');
-        }
-
-        // Clean up event registrations
-        view.off();
-        view.undelegateEvents();
     }
    
     return {

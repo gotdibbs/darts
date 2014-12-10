@@ -112,7 +112,12 @@
             view.state = {
                 player: 1,
                 players: view.options.players,
-                rounds: 1,
+                rounds: {
+                    player1: 1,
+                    player2: 0,
+                    player3: 0,
+                    player4: 0
+                },
                 actions: [],
                 marks: 0,
                 scores: {
@@ -180,19 +185,34 @@
                 currentPlayer = view.state.player,
                 nextPlayer = currentPlayer === view.state.players ? 1 : currentPlayer + 1;
 
-            marks = _.filter(view.state.actions, function (action) {
-                    return ((action.type === 'points' || action.type === 'add') && action.player === view.state.player);
-                }).length;
-
             view.options.Dispatcher.trigger('show-stats', {
                 header: 'Round Summary',
                 stats: [
-                    { Name: 'Rounds', Value: view.state.rounds },
-                    { Name: 'Marks per Round', Value: (marks / view.state.rounds) }
+                    { Name: 'Rounds', Value: view.state.rounds['player' + currentPlayer] },
+                    { Name: 'Marks per Round', Value: view.getMarksPerRound() }
                 ],
                 currentPlayer: currentPlayer,
                 nextPlayer: nextPlayer
             });
+        }
+
+        function getMarks(player) {
+            var view = this;
+
+            player = player || view.state.player;
+
+            return _.filter(view.state.actions, function (action) {
+                return (action.player === player &&
+                    (action.type === 'points' || action.type === 'add'));
+            }).length;
+        }
+
+        function getMarksPerRound(player) {
+            var view = this;
+
+            player = player || view.state.player;
+
+            return (view.getMarks(player) / view.state.rounds['player' + player]).toFixed(2);
         }
 
         function advanceRound(event) {
@@ -200,23 +220,14 @@
 
             view.state.player = event.nextPlayer;
 
-            if (view.state.player !== 1) {
-                view.state.actions.push({
-                    type: 'end-turn',
-                    player: event.currentPlayer
-                });
-            }
+            view.state.rounds['player' + event.nextPlayer]++;
+
+            view.state.actions.push({
+                type: 'end-turn',
+                player: event.currentPlayer
+            });
 
             view.render();
-
-            // Start of new round
-            if (view.state.player === 1) {
-                view.state.rounds++;
-                view.state.actions.push({
-                    type: 'end-round',
-                    player: event.currentPlayer
-                });
-            }
         }
 
         function updateScore(event) {
@@ -278,7 +289,8 @@
                 player = view.state.player,
                 // Assume innocent until proven guilty
                 isPlayerClosed = true, 
-                stats;
+                stats = [],
+                i;
 
             view.collection.forEach(function (mark) {
                 if (mark.get(player) < 3) {
@@ -288,13 +300,17 @@
             });
 
             if (isPlayerClosed && view.state.scores['player' + player] >= _.max(view.state.scores)) {
+                stats.push({ Name: 'Winner', Value: 'Player ' + player });
+                stats.push({ Name: 'Rounds', Value: view.state.rounds['player' + player] });
+
+                for (var i = 1; i <= view.state.players; i++) {
+                    stats.push({ Name: 'MPR Player ' + i, Value: view.getMarksPerRound(i) });
+                }
+
                 view.options.Dispatcher.trigger('show-stats', {
                     header: 'Game Over',
                     endGame: true,
-                    stats: [
-                        { Name: 'Winner', Value: 'Player ' + player },
-                        { Name: 'Rounds', Value: view.state.rounds }
-                    ]
+                    stats: stats
                 });
             }
         }
@@ -334,11 +350,7 @@
 
             if (action.type === 'end-turn') {
                 view.state.player = player;
-            }
-
-            if (action.type === 'end-round') {
-                view.state.player = player;
-                view.state.rounds--;
+                view.state.rounds['player' + player]--;
             }
 
             view.render();
@@ -350,7 +362,9 @@
             initialize: initialize,
             attachEvents: attachEvents,
             render: render,
-            checkState: checkState
+            checkState: checkState,
+            getMarks: getMarks,
+            getMarksPerRound: getMarksPerRound
         };
 
     }());

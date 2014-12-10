@@ -200,16 +200,22 @@
 
             view.state.player = event.nextPlayer;
 
-            view.state.actions.push({
-                type: 'end-round',
-                player: event.currentPlayer
-            });
+            if (view.state.player !== 1) {
+                view.state.actions.push({
+                    type: 'end-turn',
+                    player: event.currentPlayer
+                });
+            }
 
             view.render();
 
             // Start of new round
             if (view.state.player === 1) {
                 view.state.rounds++;
+                view.state.actions.push({
+                    type: 'end-round',
+                    player: event.currentPlayer
+                });
             }
         }
 
@@ -324,6 +330,10 @@
                 value = parseInt(action.value, 10) || 25;
 
                 view.state.scores['player' + player] -= value;
+            }
+
+            if (action.type === 'end-turn') {
+                view.state.player = player;
             }
 
             if (action.type === 'end-round') {

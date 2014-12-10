@@ -6,7 +6,7 @@ Config = Backbone.View.extend(function () {
         'click .js-modal-close' : remove,
         'click .js-new-game': newGame,
         'click .js-players .button': updatePlayers,
-        'click .js-game .button': updateGame,
+        'click .js-game .button': updateGame
     },
 
     overlayTemplate = [
@@ -20,15 +20,16 @@ Config = Backbone.View.extend(function () {
             '<div class="modal-description">',
                 '<label for="tabs"># of Players</label>',
                 '<ul class="button-group js-players">',
-                    '<li><a href="#" class="button secondary">1</a></li>',
-                    '<li><a href="#" class="button secondary">2</a></li>',
-                    '<li><a href="#" class="button secondary">3</a></li>',
-                    '<li><a href="#" class="button">4</a></li>',
+                    '<li><a href="javascript:void(0);" class="button secondary">1</a></li>',
+                    '<li><a href="javascript:void(0);" class="button secondary">2</a></li>',
+                    '<li><a href="javascript:void(0);" class="button secondary">3</a></li>',
+                    '<li><a href="javascript:void(0);" class="button">4</a></li>',
                 '</ul>',
                 '<label for="tabs">Game</label>',
                 '<ul class="button-group js-game">',
+                    // Loops over the global variable "Games" to render each game by name
                     '<% _.each(Games, function (game, name) { %>',
-                        '<li><a href="#" class="button secondary"><%= name %></a></li>',
+                        '<li><a href="#" class="button secondary" data-ns="<%= name %>"><%= name %></a></li>',
                     '<% }); %>',
                 '</ul>',
             '</div>',
@@ -54,6 +55,7 @@ Config = Backbone.View.extend(function () {
 
         view.state = {
             players: 4,
+            // Default to Cricket
             game: 'Cricket'
         };
 
@@ -92,7 +94,7 @@ Config = Backbone.View.extend(function () {
     function newGame(event) {
         var view = this;
 
-        view.trigger('new',  view.state);
+        view.options.Dispatcher.trigger('start',  view.state);
     }
 
     function updatePlayers(event) {
@@ -110,7 +112,7 @@ Config = Backbone.View.extend(function () {
     function updateGame(event) {
         var view = this,
             $target = $(event.currentTarget),
-            game = $target.text();
+            game = $target.data('ns');
 
         view.state.game = game;
 

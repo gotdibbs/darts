@@ -1,10 +1,128 @@
 (function (global) {
 
+    var displayName = 'Cricket';
+
     global.Games = global.Games || {};
 
-    global.Games.Cricket = (function () {
+    global.Games[displayName] = Backbone.View.extend(function () {
 
-        function initialize(view) {
+        var events = {
+            'click .js-mark': updateScore,
+            'click .js-undo': undo
+        },
+
+        headerTemplate = [
+            '<div class="row board-header">',
+                '<div class="small-1 columns">&nbsp;</div>',
+                '<% if (players < 3) { %>',
+                    '<div class="small-2 columns">&nbsp;</div>',
+                '<% } %>',
+                '<div class="small-2 columns player player1<%= player === 1 ? " board-header-active" : "" %>">P1</div>',
+                '<% if (players > 2) { %>',
+                    '<div class="small-2 columns player player3<%= player === 3 ? " board-header-active" : "" %>">P3</div>',
+                '<% } %>',
+                '<div class="small-2 columns game-mode">',
+                    displayName,
+                '</div>',
+                '<% if (players > 1) { %>',
+                    '<div class="small-2 columns player player2<%= player === 2 ? " board-header-active" : "" %>">P2</div>',
+                '<% } %>',
+                '<% if (players > 3) { %>',
+                    '<div class="small-2 columns player player4<%= player === 4 ? " board-header-active" : "" %>">P4</div>',
+                '<% } %>',
+                '<% if (players < 4) { %>',
+                    '<div class="small-2 columns">&nbsp;</div>',
+                '<% } %>',
+                '<% if (players < 2) { %>',
+                    '<div class="small-2 columns">&nbsp;</div>',
+                '<% } %>',
+                '<div class="small-1 columns">&nbsp;</div>',
+            '</div>'
+        ].join(''),
+
+        scoreTemplate = [
+            '<% _.each(marks, function (mark) { %>',
+                '<div class="row board-score<%= mark.closed ? " closed" : "" %>">',
+                    '<div class="small-1 columns">&nbsp;</div>',
+                    '<% if (mark.players < 3) { %>',
+                        '<div class="small-2 columns">&nbsp;</div>',
+                    '<% } %>',
+                    '<div class="small-2 columns player player1 js-value-<%= mark.value %>"><%= mark.player1Text %></div>',
+                    '<% if (mark.players > 2) { %>',
+                        '<div class="small-2 columns player player3 js-value-<%= mark.value %>"><%= mark.player3Text %></div>',
+                    '<% } %>',
+                    '<div class="small-2 columns label board-divider js-mark">',
+                        '<%= mark.value %>',
+                    '</div>',
+                    '<% if (mark.players > 1) { %>',
+                        '<div class="small-2 columns player player2 js-value-<%= mark.value %>"><%= mark.player2Text %></div>',
+                    '<% } %>',
+                    '<% if (mark.players > 3) { %>',
+                        '<div class="small-2 columns player player4 js-value-<%= mark.value %>"><%= mark.player4Text %></div>',
+                    '<% } %>',
+                    '<% if (mark.players < 4) { %>',
+                        '<div class="small-2 columns">&nbsp;</div>',
+                    '<% } %>',
+                    '<% if (mark.players < 2) { %>',
+                        '<div class="small-2 columns">&nbsp;</div>',
+                    '<% } %>',
+                    '<div class="small-1 columns">&nbsp;</div>',
+                '</div>',
+            '<% }); %>'
+        ].join(''),
+
+        footerTemplate = [
+            '<div class="row board-footer">',
+                '<div class="small-1 columns">&nbsp;</div>',
+                '<% if (players < 3) { %>',
+                    '<div class="small-2 columns">&nbsp;</div>',
+                '<% } %>',
+                '<div class="small-2 columns player player1"><%= scores.player1 %></div>',
+                '<% if (players > 2) { %>',
+                    '<div class="small-2 columns player player3"><%= scores.player3 %></div>',
+                '<% } %>',
+                '<div class="small-2 columns">',
+                    '<a href="javascript:void(0)" class="alert button js-undo<%= actions.length === 0 ? " disabled" : "" %>">Undo</a>',
+                '</div>',
+                '<% if (players > 1) { %>',
+                    '<div class="small-2 columns player player2"><%= scores.player2 %></div>',
+                '<% } %>',
+                '<% if (players > 3) { %>',
+                    '<div class="small-2 columns player player4"><%= scores.player4 %></div>',
+                '<% } %>',
+                '<% if (players < 4) { %>',
+                    '<div class="small-2 columns">&nbsp;</div>',
+                '<% } %>',
+                '<% if (players < 2) { %>',
+                    '<div class="small-2 columns">&nbsp;</div>',
+                '<% } %>',
+                '<div class="small-1 columns">&nbsp;</div>',
+            '</div>'
+        ].join('');
+
+        function initialize() {
+            var view = this;
+
+            view.templates ={
+                header: _.template(headerTemplate),
+                score: _.template(scoreTemplate),
+                footer: _.template(footerTemplate),
+            };
+
+            view.state = {
+                player: 1,
+                players: view.options.players,
+                rounds: 1,
+                actions: [],
+                marks: 0,
+                scores: {
+                    player1: 0,
+                    player2: 0,
+                    player3: 0,
+                    player4: 0
+                }
+            };
+
             view.collection = new Marks([
                 { value: '20', players: view.options.players },
                 { value: '19', players: view.options.players },
@@ -15,19 +133,83 @@
                 { value: 'BULL', players: view.options.players }
             ]);
 
-            view.scores = {
-                player1: 0,
-                player2: 0,
-                player3: 0,
-                player4: 0,
-                players: view.options.players
-            };
+            view.attachEvents();
         }
 
-        function updateScore(event, view, cb) {
-            var $target = $(event.currentTarget),
+        function attachEvents() {
+            var view = this;
+
+            view.options.Dispatcher.on('next-round', advanceRound.bind(view));
+        }
+
+        function render() {
+            var view = this,
+                $header = $(view.templates.header(view.state)),
+                $score = $(view.templates.score({
+                    marks: view.collection.toJSON()
+                })),
+                $footer = $(view.templates.footer(view.state));
+
+            view.$el
+                .empty()
+                .off('dragend')
+                .append($header)
+                .append($score)
+                .append($footer);
+
+            // Initialize Hammer
+            view.$el.hammer({ drag_lock_to_axis: true, drag_min_distance: 100 })
+                .on('dragend', '.columns', $.proxy(showStats, view));
+        }
+
+        function showStats(event) {
+            var view = this,
+                stats,
+                marks,
+                currentPlayer = view.state.player,
+                nextPlayer = currentPlayer === view.state.players ? 1 : currentPlayer + 1;
+
+            marks = _.filter(view.state.actions, function (action) {
+                    return ((action.type === 'points' || action.type === 'add') && action.player === view.state.player);
+                }).length;
+
+            stats = new Stats({
+                Dispatcher: view.options.Dispatcher,
+                header: 'Round Summary',
+                stats: [
+                    { Name: 'Rounds', Value: view.state.rounds },
+                    { Name: 'Marks per Round', Value: (marks / view.state.rounds) }
+                ],
+                currentPlayer: currentPlayer,
+                nextPlayer: nextPlayer
+            });
+
+            stats.setElement($('.js-stats-container')).render();
+        }
+
+        function advanceRound(event) {
+            var view = this;
+
+            view.state.player = event.nextPlayer;
+
+            view.state.actions.push({
+                type: 'end-round',
+                player: event.currentPlayer
+            });
+
+            view.render();
+
+            // Start of new round
+            if (view.state.player === 1) {
+                view.state.rounds++;
+            }
+        }
+
+        function updateScore(event) {
+            var view = this,
+                $target = $(event.currentTarget),
                 player = view.state.player,
-                $player = $('.' + player, $target.parent()),
+                $player = $('.player' + player, $target.parent()),
                 currentMarks = $player.text(),
                 valueText = $target.text(),
                 value = parseInt(valueText, 10) || 25,
@@ -36,7 +218,7 @@
             // Delay the highlight so that it runs after re-render is complete.
             // 1337 hax, I know :( will fix later
             setTimeout(function () {
-                $('.' + player + '.js-value-' + valueText)
+                $('.player' + player + '.js-value-' + valueText)
                     .stop()
                     .css({backgroundColor: '#ddd'})
                     .animate({backgroundColor: 'transparent'}, 1500);
@@ -50,76 +232,112 @@
                 }
             });
 
-            if (currentMarks === '(X)') {
-                if (currentMark.canScorePoints(player)) {
-                    view.scores[player] += value;
-                    view.state.actions.push({ 
+            currentScore = currentMark.get(player);
+
+            if (currentMark.canScorePoints(player) || currentScore < 3) {
+                if (currentScore === 3) {
+                    view.state.scores['player' + player] += value;
+                    view.state.actions.push({
                         type: 'points',
                         player: player,
                         value: valueText
                     });
                 }
-            }
-            else {
-                view.state.actions.push({ 
-                    type: 'add',
-                    player: player,
-                    value: valueText
-                });
-            }
+                else {
+                    currentMark.set(player, ++currentScore);
 
-            currentScore = currentMark.get(player);
-
-            if (currentMark.canScorePoints(player) || currentScore < 3) {
-                currentMark.set(player, ++currentScore);
+                    view.state.actions.push({
+                        type: 'add',
+                        player: player,
+                        value: valueText
+                    });
+                }
             }
 
-            cb();
+            view.render();
+
+            view.checkState();
         }
 
-        function nextRound(event, view, cb) {
-            return cb();
-        }
+        function checkState() {
+            var view = this,
+                player = view.state.player,
+                // Assume innocent until proven guilty
+                isPlayerClosed = true, 
+                stats;
 
-        function undo(view, action, currentPlayer, cb) {
-            var type = action.type,
-                player = action.player,
-                valueText = action.value,
-                value = parseInt(valueText, 10) || 25;
-
-            if (action.type === 'points') {
-                view.scores[player] -= value;
-                view.$('.board-footer .' + player).text(view.scores[player]);
-            }
-
-            if (currentPlayer !== player) {
-                view.$('.board-header .player').removeClass('board-header-active');
-                view.$('.board-header .' + player).addClass('board-header-active');
-
-                view.state.player = player;
-                view.state.rounds--;
-            }
-            
             view.collection.forEach(function (mark) {
-                var modelValue = mark.get('value'),
-                    currentScore;
-
-                if (modelValue === valueText) {
-                    currentScore = mark.get(player);
-                    mark.set(player, --currentScore);
+                if (mark.get(player) < 3) {
+                    // guilty ... of not winning ... yet!
+                    isPlayerClosed = false;
                 }
             });
 
-            cb();
+            if (isPlayerClosed && view.state.scores['player' + player] >= _.max(view.state.scores)) {
+                stats = new Stats({
+                    Dispatcher: view.options.Dispatcher,
+                    header: 'Game Over',
+                    endGame: true,
+                    stats: [
+                        { Name: 'Winner', Value: 'Player ' + player },
+                        { Name: 'Rounds', Value: view.state.rounds }
+                    ]
+                });
+
+                stats.setElement($('.js-stats-container')).render();
+            }
+        }
+
+        function undo(event) {
+            var view = this,
+                action = view.state.actions.pop(),
+                currentPlayer = view.state.player,
+                type,
+                player,
+                value;
+
+            if (!action) {
+                return;
+            }
+
+            type = action.type;
+            player = action.player;
+
+            if (action.type === 'add') {
+                view.collection.forEach(function (mark) {
+                    var modelValue = mark.get('value'),
+                        currentScore;
+
+                    if (modelValue === action.value) {
+                        currentScore = mark.get(player);
+                        mark.set(player, --currentScore);
+                    }
+                });
+            }
+
+            if (action.type === 'points') {
+                value = parseInt(action.value, 10) || 25;
+
+                view.state.scores['player' + player] -= value;
+            }
+
+            if (action.type === 'end-round') {
+                view.state.player = player;
+                view.state.rounds--;
+            }
+
+            view.render();
         }
 
         return {
-            initialize: initialize,
+            events: events,
 
-            updateScore: updateScore,
-            nextRound: nextRound,
-            undo: undo
+            initialize: initialize,
+            attachEvents: attachEvents,
+            render: render,
+            checkState: checkState
         };
+
     }());
 
 }(window));

@@ -16,10 +16,6 @@ body {
     font-size: 2rem;
     border-bottom: 1px solid #000; }
 
-.game-mode {
-    font-size: 2rem;
-    color: #aaa; }
-
 .board-header .columns {
     padding: 1rem; }
 
@@ -46,6 +42,23 @@ body {
 
 .drop-left-padding {
     padding-left: 0; }
+
+.board-button {
+    display: inline; }
+
+.board-button-container {
+    line-height: 2.25rem; }
+
+.board-button-container-footer {
+    line-height: 2.75rem; }
+
+.center-x {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%); }
+
+.text-large {
+    font-size: 1.5rem; }
 
 /* -- Modal -- */
 .modal {

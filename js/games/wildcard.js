@@ -8,6 +8,7 @@
 
         var events = {
             'click .js-mark': updateScore,
+            'click .js-next': showStats,
             'click .js-undo': undo
         },
 
@@ -21,8 +22,8 @@
                 '<% if (players > 2) { %>',
                     '<div class="small-2 columns player player3<%= player === 3 ? " board-header-active" : "" %>">P3</div>',
                 '<% } %>',
-                '<div class="small-2 columns game-mode">',
-                    displayName,
+                '<div class="small-2 columns board-button-container">',
+                    '<a href="javascript:void(0);" class="alert button board-button js-next">Next</a>',
                 '</div>',
                 '<% if (players > 1) { %>',
                     '<div class="small-2 columns player player2<%= player === 2 ? " board-header-active" : "" %>">P2</div>',
@@ -81,8 +82,8 @@
                 '<% if (players > 2) { %>',
                     '<div class="small-2 columns player player3"><%= scores.player3 %></div>',
                 '<% } %>',
-                '<div class="small-2 columns">',
-                    '<a href="javascript:void(0)" class="alert button js-undo<%= actions.length === 0 ? " disabled" : "" %>">Undo</a>',
+                '<div class="small-2 columns board-button-container-footer">',
+                    '<a href="javascript:void(0)" class="alert button board-button js-undo<%= actions.length === 0 ? " disabled" : "" %>">Undo</a>',
                 '</div>',
                 '<% if (players > 1) { %>',
                     '<div class="small-2 columns player player2"><%= scores.player2 %></div>',
@@ -119,13 +120,12 @@
                 player: 1,
                 players: view.options.players,
                 rounds: {
-                    player1: 0,
+                    player1: 1,
                     player2: 0,
                     player3: 0,
                     player4: 0
                 },
                 actions: [],
-                marks: 0,
                 scores: {
                     player1: 0,
                     player2: 0,
@@ -208,7 +208,7 @@
                 header: 'Round Summary',
                 stats: [
                     { Name: 'Rounds', Value: view.state.rounds['player' + currentPlayer] },
-                    { Name: 'Marks per Round', Value: getMarksPerRound() }
+                    { Name: 'Marks per Round', Value: view.getMarksPerRound() }
                 ],
                 currentPlayer: currentPlayer,
                 nextPlayer: nextPlayer
@@ -240,11 +240,12 @@
 
             view.state.player = event.nextPlayer;
 
-            view.state.rounds['player' + event.currentPlayer]++;
+            view.state.rounds['player' + event.nextPlayer]++;
 
             view.state.actions.push({
                 type: 'end-turn',
-                player: event.currentPlayer
+                player: event.currentPlayer,
+                nextPlayer: event.nextPlayer
             });
 
             view.collection.forEach(function (mark) {
@@ -276,7 +277,9 @@
                 currentMarks = $player.text(),
                 valueText = $target.text(),
                 value = parseInt(valueText, 10) || 25,
-                currentMark;
+                currentMark = view.collection.get(valueText),
+                currentScore = currentMark.get(player),
+                sortedScores, maxScore, nextHighestScore;
 
             // Delay the highlight so that it runs after re-render is complete.
             // 1337 hax, I know :( will fix later
@@ -287,24 +290,29 @@
                     .animate({backgroundColor: 'transparent'}, 1500);
             }, 100);
 
-            view.collection.forEach(function (mark) {
-                var modelValue = mark.get('value');
-
-                if (modelValue === valueText) {
-                    currentMark = mark;
-                }
-            });
-
-            currentScore = currentMark.get(player);
-
             if (currentMark.canScorePoints(player) || currentScore < 3) {
                 if (currentScore === 3) {
-                    view.state.scores['player' + player] += value;
-                    view.state.actions.push({
-                        type: 'points',
-                        player: player,
-                        value: valueText
-                    });
+                    sortedScores = _.sortBy(view.state.scores, function (score) {
+                        return score;
+                    }),
+                    maxScore = sortedScores.pop(),
+                    nextHighestScore = sortedScores.pop();
+
+                    // Check to ensure the score is not going to exceed 200 past next player
+                    if (view.state.scores['player' + player] >= maxScore &&
+                        (maxScore + value) > (nextHighestScore + 200)) {
+                        value = ((nextHighestScore + 200) - maxScore) || 0;
+                        valueText = value.toString();
+                    }
+
+                    if (value !== 0) {
+                        view.state.scores['player' + player] += value;
+                        view.state.actions.push({
+                            type: 'points',
+                            player: player,
+                            value: valueText
+                        });
+                    }
                 }
                 else {
                     currentMark.set(player, ++currentScore);
@@ -357,39 +365,28 @@
             var view = this,
                 action = view.state.actions.pop(),
                 currentPlayer = view.state.player,
-                type,
-                player,
-                value;
+                mark, score, value;
 
             if (!action) {
                 return;
             }
 
-            type = action.type;
-            player = action.player;
-
             if (action.type === 'add') {
-                view.collection.forEach(function (mark) {
-                    var modelValue = mark.get('value'),
-                        currentScore;
-
-                    if (modelValue === action.value) {
-                        currentScore = mark.get(player);
-                        mark.set(player, --currentScore);
-                    }
-                });
+                mark = view.collection.get(action.value);
+                score = mark.get(action.player);
+                mark.set(action.player, --score);
             }
 
             if (action.type === 'points') {
                 value = parseInt(action.value, 10) || 25;
 
-                view.state.scores['player' + player] -= value;
+                view.state.scores['player' + action.player] -= value;
             }
 
             if (action.type === 'end-turn') {
-                view.state.player = player;
-
-                view.state.rounds['player' + player]--;
+                view.state.player = action.player;
+                
+                view.state.rounds['player' + action.nextPlayer]--;
             }
 
             view.render();

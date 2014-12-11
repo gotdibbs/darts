@@ -99,6 +99,8 @@ Mark = Backbone.Model.extend(function () {
     }
 
     return {
+        idAttribute: 'value',
+
         defaults: defaults,
 
         initialize: initialize,

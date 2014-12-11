@@ -52,10 +52,11 @@ body {
 .board-button-container-footer {
     line-height: 2.75rem; }
 
-.center-x {
+.top-bar .game-title {
     position: absolute;
     left: 50%;
-    transform: translateX(-50%); }
+    width: 110px;
+    margin-left: -55px; }
 
 .text-large {
     font-size: 1.5rem; }

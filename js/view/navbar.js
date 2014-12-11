@@ -9,6 +9,10 @@ NavBar = Backbone.View.extend(function () {
 
     function initialize() {
         var view = this;
+
+        view.options.Dispatcher.on('start', function (event) {
+            view.$('.js-game-title').text(event.game)
+        });
     }
 
     function startNewGame() {

@@ -36,6 +36,11 @@ Stats = Backbone.View.extend(function () {
             overlay: _.template(overlayTemplate),
             modal: _.template(template)
         };
+
+        view.state = {
+            isTouchRegistered: false,
+            touchControl: null
+        };
     }
 
     function render(options) {
@@ -58,6 +63,20 @@ Stats = Backbone.View.extend(function () {
         view.$('.js-game .button')
             .first()
             .removeClass('secondary');
+
+        if (!view.state.isTouchRegistered) {
+            view.state.isTouchRegistered = true;
+
+            // Initialize Hammer
+            view.state.touchControl = new Hammer(view.el);
+
+            view.state.touchControl.get('swipe').set({ 
+                direction: Hammer.DIRECTION_LEFT,
+                threshold: 100
+            });
+
+            view.state.touchControl.on('swipeleft', $.proxy(remove, view));
+        }
     }
 
     function remove(event) {
@@ -66,6 +85,10 @@ Stats = Backbone.View.extend(function () {
             $background = $('.js-modal-background');
 
         if (event) { event.preventDefault(); }
+
+        if (view.state.isTouchRegistered) {
+            view.state.touchControl.destroy();
+        }
 
         $dialog
             .css({ right: $(document).outerWidth() + 560, top: 0, bottom: 0 });

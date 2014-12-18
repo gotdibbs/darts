@@ -52,7 +52,7 @@
                     '<% if (mark.players > 2) { %>',
                         '<div class="small-2 columns player player3 js-value-<%= mark.value %>"><%= mark.player3Text %></div>',
                     '<% } %>',
-                    '<div class="small-2 columns label board-divider js-mark">',
+                    '<div class="small-2 columns label board-divider js-mark" data-value="<%= mark.value %>">',
                         '<%= mark.value %>',
                     '</div>',
                     '<% if (mark.players > 1) { %>',
@@ -185,6 +185,8 @@
                 currentPlayer = view.state.player,
                 nextPlayer = currentPlayer === view.state.players ? 1 : currentPlayer + 1;
 
+                console.log('show');
+
             view.options.Dispatcher.trigger('show-stats', {
                 header: 'Round Summary',
                 stats: [
@@ -237,7 +239,7 @@
                 player = view.state.player,
                 $player = $('.player' + player, $target.parent()),
                 currentMarks = $player.text(),
-                valueText = $target.text(),
+                valueText = $target.data('value'),
                 value = parseInt(valueText, 10) || 25,
                 currentMark = view.collection.get(valueText),
                 currentScore = currentMark.get(player),
